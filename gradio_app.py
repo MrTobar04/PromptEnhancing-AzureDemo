@@ -124,7 +124,25 @@ def enhance_prompt(user_prompt, use_case):
 #        GRADIO UI
 # --------------------------
 
-with gr.Blocks(css="footer {visibility: hidden}") as app:
+custom_css = """
+#small-submit-btn {
+    padding: 4px 10px !important;
+    font-size: 12px !important;
+    border-radius: 6px !important;
+    height: 28px !important;
+}
+
+.label-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: -8px;
+}
+
+footer {visibility: hidden}
+"""
+
+with gr.Blocks(css=custom_css) as app:
     gr.Markdown(
         """
         # ✨ Prompt Enhancer  
@@ -151,25 +169,29 @@ with gr.Blocks(css="footer {visibility: hidden}") as app:
             interactive=True
         )
 
-    with gr.Row():
-        input_box = gr.Textbox(
-            label="Enter your prompt",
-            placeholder="Write the prompt you want to enhance...",
-            lines=4
-        )
+    # -------- Label + Small Button Row (Gradio only) --------
+    with gr.Row(elem_classes=["label-row"]):
+        gr.Markdown("**Enter your prompt**")
+        small_button = gr.Button("Enhance ⋆˙⟡", elem_id="small-submit-btn", variant="secondary")
 
-    submit_btn = gr.Button("Enhance Prompt", variant="primary")
+    # Textbox with hidden label
+    input_box = gr.Textbox(
+        label="",   # hide built-in label
+        placeholder="Write the prompt you want to enhance...",
+        lines=4
+    )
 
     output_box = gr.Textbox(
         label="Enhanced Prompt",
         lines=6
     )
 
-    submit_btn.click(
+    # Hook small button to processing function
+    small_button.click(
         fn=enhance_prompt,
         inputs=[input_box, use_case_dropdown],
         outputs=output_box
     )
 
-# Run the app
 app.queue().launch()
+
