@@ -125,7 +125,7 @@ def enhance_prompt(user_prompt, use_case):
 # --------------------------
 
 custom_css = """
-#small-submit-btn {
+#small-submit-btn, #back-btn {
     padding: 4px 10px !important;
     font-size: 12px !important;
     border-radius: 6px !important;
@@ -141,6 +141,23 @@ custom_css = """
 
 footer {visibility: hidden}
 """
+
+# --- Backend helpers for UI state ---
+
+def enhance_and_replace(prompt, use_case, stored_original, is_enhanced):
+    """Enhance prompt and replace text in-place; store original if needed."""
+    # Only store original if this is the first enhancement
+    if not is_enhanced:
+        stored_original = prompt
+
+    enhanced = enhance_prompt(prompt, use_case)
+    return enhanced, stored_original, True, gr.Button(visible=True)
+
+
+def go_back(stored_original):
+    """Return to the original prompt."""
+    return stored_original, False, gr.Button(visible=False)
+
 
 with gr.Blocks(css=custom_css) as app:
     gr.Markdown(
@@ -169,29 +186,35 @@ with gr.Blocks(css=custom_css) as app:
             interactive=True
         )
 
-    # -------- Label + Small Button Row (Gradio only) --------
+    # -------- Label + Buttons Row --------
     with gr.Row(elem_classes=["label-row"]):
         gr.Markdown("**Enter your prompt**")
-        small_button = gr.Button("Enhance ⋆˙⟡", elem_id="small-submit-btn", variant="secondary")
+        enhance_btn = gr.Button("Enhance ⋆˙⟡", elem_id="small-submit-btn", variant="secondary")
+        back_btn = gr.Button("Back ↩", elem_id="back-btn", variant="secondary", visible=False)
 
-    # Textbox with hidden label
+    # Single textbox
     input_box = gr.Textbox(
-        label="",   # hide built-in label
+        label="",
         placeholder="Write the prompt you want to enhance...",
         lines=4
     )
 
-    output_box = gr.Textbox(
-        label="Enhanced Prompt",
-        lines=6
+    # Hidden state variables
+    stored_original = gr.State("")
+    is_enhanced = gr.State(False)
+
+    # --- Enhance button → modifies input in place ---
+    enhance_btn.click(
+        fn=enhance_and_replace,
+        inputs=[input_box, use_case_dropdown, stored_original, is_enhanced],
+        outputs=[input_box, stored_original, is_enhanced, back_btn]
     )
 
-    # Hook small button to processing function
-    small_button.click(
-        fn=enhance_prompt,
-        inputs=[input_box, use_case_dropdown],
-        outputs=output_box
+    # --- Back button → restore original ---
+    back_btn.click(
+        fn=go_back,
+        inputs=[stored_original],
+        outputs=[input_box, is_enhanced, back_btn]
     )
 
 app.queue().launch()
-
