@@ -10,7 +10,7 @@ load_dotenv()
 # Azure OpenAI Client Setup
 client = ChatCompletionsClient(
     endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-    credential=AzureKeyCredential(os.environ["AZURE_OPENAI_API_KEY"]),
+    credential=AzureKeyCredential(os.environ["AZURE_API_KEY"]),
 )
 
 deployment_name = os.getenv("AZURE_OPENAI_DEPLOYMENT")
